@@ -2,6 +2,7 @@ package com.example.customlistview_startrek;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 
 import android.media.MediaParser;
@@ -22,6 +23,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -43,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
     MediaPlayer liveLongProsper;
     MediaPlayer khanVideo;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
         liveLongProsper = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("live_long_prosper", "raw", getPackageName()));
         khanVideo = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("wrath_of_khan", "raw", getPackageName()));
+
 
     }
 
@@ -78,14 +80,12 @@ public class MainActivity extends AppCompatActivity {
             startActivity(browserIntent);
             return true;
         }
-
         if (id == R.id.mnu_two) {
             //Nuclear Wessel: pre-dial 1-800-startrk
             Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + "1-800-startrek" ));
             startActivity(dialIntent);
             return true;
         }
-
         if (id == R.id.mnu_three) {
             //Phasers on stun: spawn SMS with the text "Ouch!"
 //            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:"));
@@ -101,13 +101,11 @@ public class MainActivity extends AppCompatActivity {
             startActivity(smsIntent);
             return true;
         }
-
         if (id == R.id.mnu_four) {
             //Live Long and Prosper: play audio of this phrase
             liveLongProsper.start();
             return true;
         }
-
         if (id == R.id.mnu_five) {
             //Kahn!! : play video
 //            khanVideo.start();
@@ -135,13 +133,45 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);  //if none of the above are true, do the default and return a boolean.
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        try {
+            SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
+            float value = sharedPref.getFloat("rating", 0);
+
+            MyCustomAdapter.ratingbar.setRating(value);
+        }catch(Exception e){
+            Log.d("note", "need to implement");
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
+        SharedPreferences.Editor data = sharedPref.edit();
+
+        data.putFloat("rating", MyCustomAdapter.ratingbar.getRating());
+        data.apply();
+    }
 
     @Override
     protected void onStop() {
         super.onStop();
         liveLongProsper.release();
         liveLongProsper = null;
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
+        SharedPreferences.Editor data = sharedPref.edit();
+
+        data.putFloat("rating", MyCustomAdapter.ratingbar.getRating());
+        data.apply();
     }
 }
 
@@ -185,7 +215,7 @@ class MyCustomAdapter extends BaseAdapter {
 
 //    ArrayList<String> episodes;
 //    ArrayList<String> episodeDescriptions;
-
+static RatingBar ratingbar;
     Button btnRandom;
     Context context;   //Creating a reference to our context object, so we only have to get it once.  Context enables access to application specific resources.
     // Eg, spawning & receiving intents, locating the various managers.
@@ -267,6 +297,16 @@ class MyCustomAdapter extends BaseAdapter {
         tvEpisodeDescription.setText(episodeDescriptions[position]);
         imgEpisode.setImageResource(episodeImages.get(position).intValue());
 
+        //retrieve rating bar
+        ratingbar = (RatingBar) row.findViewById(R.id.rbEpisode);
+        ratingbar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+            @Override
+            public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
+                ratingBar.setRating(v);
+            }
+        });
+
+
         btnRandom = (Button) row.findViewById(R.id.btnRandom);
         final String randomMsg = ((Integer)position).toString() +": "+ episodeDescriptions[position];
         btnRandom.setOnClickListener(new View.OnClickListener() {
@@ -281,7 +321,6 @@ class MyCustomAdapter extends BaseAdapter {
 //return convertView;
 
     }
-
 
 
     ///Helper method to get the drawables...///
