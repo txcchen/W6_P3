@@ -35,7 +35,9 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,9 +49,6 @@ public class MainActivity extends AppCompatActivity {
     MediaPlayer liveLongProsper;
     MediaPlayer khanVideo;
 
-//    protected static Integer[] ratingNums = {};
-static List<Integer> ratingNums = new ArrayList<Integer>();
-    RatingBar ratingB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +61,6 @@ static List<Integer> ratingNums = new ArrayList<Integer>();
 
         liveLongProsper = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("live_long_prosper", "raw", getPackageName()));
         khanVideo = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("wrath_of_khan", "raw", getPackageName()));
-
 
     }
 
@@ -142,26 +140,11 @@ static List<Integer> ratingNums = new ArrayList<Integer>();
     @Override
     protected void onResume() {
         super.onResume();
-        if(sharedPref.) {
-            SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
-            for(int i = 0;; i++){
-                final int index = sharedPref.getInt(String.valueOf(i), 3);
-                ratingNums.add(index);
-            }
-        }
-        Log.d("rating value", String.valueOf(ratingNums));
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        for(int i = 0; i < ratingNums.size(); i++){
-            editor.putInt(String.valueOf(i), ratingNums.get(i));
-        }
-        editor.apply();
     }
 
     @Override
@@ -194,31 +177,7 @@ static List<Integer> ratingNums = new ArrayList<Integer>();
 //create a  class that extends BaseAdapter
 //Hit Alt-Ins to easily implement required BaseAdapter methods.
 //***************************************************************//
-//
-//class m2 extends BaseAdapter{
-//    @Override
-//    public int getCount() {
-//        return 0;
-//    }
-//
-//    @Override
-//    public Object getItem(int position) {
-//        return null;
-//    }
-//
-//    @Override
-//    public long getItemId(int position) {
-//        return 0;
-//    }
-//
-//    @Override
-//    public View getView(int position, View convertView, ViewGroup parent) {
-//        return null;
-//    }
-//}
-
 //STEP 1: Create references to needed resources for the ListView Object.  String Arrays, Images, etc.
-
 class MyCustomAdapter extends BaseAdapter {
 
     private
@@ -309,23 +268,6 @@ class MyCustomAdapter extends BaseAdapter {
         tvEpisodeDescription.setText(episodeDescriptions[position]);
         imgEpisode.setImageResource(episodeImages.get(position).intValue());
 
-        //retrieve rating bar
-        ratingbar = row.findViewById(R.id.rbEpisode);
-        ratingbar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
-            @Override
-            public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
-                ratingBar.setRating((int) v);
-                MainActivity.ratingNums.add((int) v); //store rating val in the arraylist
-            }
-        });
-
-        //set rating bar value
-        if(MainActivity.ratingNums.size() > 0){
-               int i = MainActivity.ratingNums.remove(0);
-                ratingbar.setRating(i);
-               }
-
-        Log.d("ratingnums", String.valueOf(MainActivity.ratingNums));
         btnRandom = (Button) row.findViewById(R.id.btnRandom);
         final String randomMsg = ((Integer)position).toString() +": "+ episodeDescriptions[position];
         btnRandom.setOnClickListener(new View.OnClickListener() {
