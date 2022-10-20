@@ -20,5 +20,14 @@
         <item>So cute!!</item>
     </string-array>
 
+    <string-array name="episode_links">
+        <item>https://www.imdb.com/title/tt0708449/</item>
+        <item>https://www.imdb.com/title/tt0708418/</item>
+        <item>https://www.imdb.com/title/tt0708483/</item>
+        <item>https://www.imdb.com/title/tt0708438/</item>
+        <item>https://www.imdb.com/title/tt0708443/</item>
+        <item>https://www.imdb.com/title/tt0708473/</item>
+        <item>https://www.imdb.com/title/tt0708480/</item>
+    </string-array>
 
 </resources>
