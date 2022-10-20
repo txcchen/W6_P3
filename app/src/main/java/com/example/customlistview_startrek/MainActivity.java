@@ -9,6 +9,7 @@ import android.media.MediaParser;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,6 +46,10 @@ public class MainActivity extends AppCompatActivity {
     ListAdapter lvAdapter;   //Reference to the Adapter used to populate the listview.
     MediaPlayer liveLongProsper;
     MediaPlayer khanVideo;
+
+//    protected static Integer[] ratingNums = {};
+static List<Integer> ratingNums = new ArrayList<Integer>();
+    RatingBar ratingB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,42 +142,50 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        try {
+        if(sharedPref.) {
             SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
-            float value = sharedPref.getFloat("rating", 0);
-
-            MyCustomAdapter.ratingbar.setRating(value);
-        }catch(Exception e){
-            Log.d("note", "need to implement");
+            for(int i = 0;; i++){
+                final int index = sharedPref.getInt(String.valueOf(i), 3);
+                ratingNums.add(index);
+            }
         }
+        Log.d("rating value", String.valueOf(ratingNums));
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
-        SharedPreferences.Editor data = sharedPref.edit();
+        SharedPreferences.Editor editor = sharedPref.edit();
 
-        data.putFloat("rating", MyCustomAdapter.ratingbar.getRating());
-        data.apply();
+        for(int i = 0; i < ratingNums.size(); i++){
+            editor.putInt(String.valueOf(i), ratingNums.get(i));
+        }
+        editor.apply();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        liveLongProsper.release();
-        liveLongProsper = null;
+
+        try{
+            liveLongProsper.release();
+            liveLongProsper = null;
+        }catch (Exception e){
+            Log.d("status", "no video");
+        }
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
-        SharedPreferences.Editor data = sharedPref.edit();
-
-        data.putFloat("rating", MyCustomAdapter.ratingbar.getRating());
-        data.apply();
+//        SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
+//        SharedPreferences.Editor data = sharedPref.edit();
+//
+//        data.putFloat("rating", MyCustomAdapter.ratingbar.getRating());
+//        data.apply();
     }
 }
 
@@ -215,7 +229,7 @@ class MyCustomAdapter extends BaseAdapter {
 
 //    ArrayList<String> episodes;
 //    ArrayList<String> episodeDescriptions;
-static RatingBar ratingbar;
+    RatingBar ratingbar;
     Button btnRandom;
     Context context;   //Creating a reference to our context object, so we only have to get it once.  Context enables access to application specific resources.
     // Eg, spawning & receiving intents, locating the various managers.
@@ -228,11 +242,9 @@ static RatingBar ratingbar;
         context = aContext;  //saving the context we'll need it again.
         episodes =aContext.getResources().getStringArray(R.array.episodes);  //retrieving list of episodes predefined in strings-array "episodes" in strings.xml
         episodeDescriptions = aContext.getResources().getStringArray(R.array.episode_descriptions);
-
 //This is how you would do it if you were using an ArrayList, leaving code here for reference, though we could use it instead of the above.
 //        episodes = (ArrayList<String>) Arrays.asList(aContext.getResources().getStringArray(R.array.episodes));  //retrieving list of episodes predefined in strings-array "episodes" in strings.xml
 //        episodeDescriptions = (ArrayList<String>) Arrays.asList(aContext.getResources().getStringArray(R.array.episode_descriptions));  //Also casting to a friendly ArrayList.
-
 
         episodeImages = new ArrayList<Integer>();   //Could also use helper function "getDrawables(..)" below to auto-extract drawable resources, but keeping things as simple as possible.
         episodeImages.add(R.drawable.st_spocks_brain);
@@ -298,15 +310,22 @@ static RatingBar ratingbar;
         imgEpisode.setImageResource(episodeImages.get(position).intValue());
 
         //retrieve rating bar
-        ratingbar = (RatingBar) row.findViewById(R.id.rbEpisode);
+        ratingbar = row.findViewById(R.id.rbEpisode);
         ratingbar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
             @Override
             public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
-                ratingBar.setRating(v);
+                ratingBar.setRating((int) v);
+                MainActivity.ratingNums.add((int) v); //store rating val in the arraylist
             }
         });
 
+        //set rating bar value
+        if(MainActivity.ratingNums.size() > 0){
+               int i = MainActivity.ratingNums.remove(0);
+                ratingbar.setRating(i);
+               }
 
+        Log.d("ratingnums", String.valueOf(MainActivity.ratingNums));
         btnRandom = (Button) row.findViewById(R.id.btnRandom);
         final String randomMsg = ((Integer)position).toString() +": "+ episodeDescriptions[position];
         btnRandom.setOnClickListener(new View.OnClickListener() {
