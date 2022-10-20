@@ -1,8 +1,12 @@
 package com.example.customlistview_startrek;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 
+import android.media.MediaParser;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
     private
     ListView lvEpisodes;     //Reference to the listview GUI component
     ListAdapter lvAdapter;   //Reference to the Adapter used to populate the listview.
+    MediaPlayer liveLongProsper;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
         lvEpisodes = (ListView)findViewById(R.id.lvEpisodes);
         lvAdapter = new MyCustomAdapter(this.getBaseContext());  //instead of passing the boring default string adapter, let's pass our own, see class MyCustomAdapter below!
         lvEpisodes.setAdapter(lvAdapter);
+
+        liveLongProsper = MediaPlayer.create(MainActivity.this, R.raw.live_long_prosper);
 
     }
 
@@ -59,20 +67,64 @@ public class MainActivity extends AppCompatActivity {
 
         int id = item.getItemId();
 
-        if (id == R.id.mnu_zero) {
-            Toast.makeText(getBaseContext(), "Menu Zero.", Toast.LENGTH_LONG).show();
+        if (id == R.id.mnu_one) {
+            //Merchandise: open up the following page in an external browser
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://shop.startrek.com"));
+            startActivity(browserIntent);
             return true;
         }
 
-        if (id == R.id.mnu_one) {
-            Toast.makeText(getBaseContext(), "Ring ring, Hi Mom.", Toast.LENGTH_LONG).show();
+        if (id == R.id.mnu_two) {
+            //Nuclear Wessel: pre-dial 1-800-startrk
+            Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + "1-800-startrek" ));
+            startActivity(dialIntent);
             return true;
         }
 
         if (id == R.id.mnu_three) {
-            Toast.makeText(getBaseContext(), "Hangup it's a telemarketer.", Toast.LENGTH_LONG).show();
+            //Phasers on stun: spawn SMS with the text "Ouch!"
+//            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:"));
+//            smsIntent.setType("text/plain");
+//            smsIntent.putExtra(Intent.EXTRA_TEXT, "Ouch!!");
+//            startActivity(smsIntent);
+
+            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:"));
+//            smsIntent.addCategory(Intent.CATEGORY_APP_MESSAGING);
+//            smsIntent.setType("vnd.android-dir/mms-sms");
+//            smsIntent.putExtra("address", "");
+            smsIntent.putExtra("sms_body", "Ouch!!");
+            startActivity(smsIntent);
             return true;
         }
+
+        if (id == R.id.mnu_four) {
+            //Live Long and Prosper: play audio of this phrase
+            liveLongProsper.start();
+            return true;
+        }
+
+//        if (id == R.id.mnu_five) {
+//            //Kahn!! : play video
+//            Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + "1-800-startrek" ));
+//            startActivity(dialIntent);
+//            return true;
+//        }
+
+
+//        if (id == R.id.mnu_zero) {
+//            Toast.makeText(getBaseContext(), "Menu Zero.", Toast.LENGTH_LONG).show();
+//            return true;
+//        }
+//
+//        if (id == R.id.mnu_one) {
+//            Toast.makeText(getBaseContext(), "Ring ring, Hi Mom.", Toast.LENGTH_LONG).show();
+//            return true;
+//        }
+//
+//        if (id == R.id.mnu_three) {
+//            Toast.makeText(getBaseContext(), "Hangup it's a telemarketer.", Toast.LENGTH_LONG).show();
+//            return true;
+//        }
 
         return super.onOptionsItemSelected(item);  //if none of the above are true, do the default and return a boolean.
     }
