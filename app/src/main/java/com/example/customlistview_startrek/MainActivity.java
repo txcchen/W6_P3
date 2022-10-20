@@ -5,8 +5,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 
+
+=======
 import android.media.MediaParser;
 import android.media.MediaPlayer;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -17,6 +20,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
@@ -35,9 +40,12 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -61,7 +69,6 @@ public class MainActivity extends AppCompatActivity {
 
         liveLongProsper = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("live_long_prosper", "raw", getPackageName()));
         khanVideo = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("wrath_of_khan", "raw", getPackageName()));
-
     }
 
     @Override
@@ -105,27 +112,10 @@ public class MainActivity extends AppCompatActivity {
         }
         if (id == R.id.mnu_five) {
             //Kahn!! : play video
-//            khanVideo.start();
             Intent videoIntent = new Intent(MainActivity.this, VideoActivity.class);
             startActivity(videoIntent);
             return true;
         }
-
-
-//        if (id == R.id.mnu_zero) {
-//            Toast.makeText(getBaseContext(), "Menu Zero.", Toast.LENGTH_LONG).show();
-//            return true;
-//        }
-//
-//        if (id == R.id.mnu_one) {
-//            Toast.makeText(getBaseContext(), "Ring ring, Hi Mom.", Toast.LENGTH_LONG).show();
-//            return true;
-//        }
-//
-//        if (id == R.id.mnu_three) {
-//            Toast.makeText(getBaseContext(), "Hangup it's a telemarketer.", Toast.LENGTH_LONG).show();
-//            return true;
-//        }
 
         return super.onOptionsItemSelected(item);  //if none of the above are true, do the default and return a boolean.
     }
@@ -133,11 +123,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        SharedPreferences prefs = getSharedPreferences("Rating Bar Preferences", Context.MODE_PRIVATE);
+        Map<String, ?> x = prefs.getAll();
+        Log.d("debugging::", x.toString());
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+
     }
 
     @Override
@@ -150,7 +146,6 @@ public class MainActivity extends AppCompatActivity {
         }catch (Exception e){
             Log.d("status", "no video");
         }
-
     }
 
     @Override
@@ -162,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
 //
 //        data.putFloat("rating", MyCustomAdapter.ratingbar.getRating());
 //        data.apply();
+
     }
 }
 
@@ -176,12 +172,16 @@ class MyCustomAdapter extends BaseAdapter {
     private
     String episodes[];             //Keeping it simple.  Using Parallel arrays is the introductory way to store the List data.
     String  episodeDescriptions[];  //the "better" way is to encapsulate the list items into an object, then create an arraylist of objects.
+    String episodeLinks[];  // website links of each episodes
     //     int episodeImages[];         //this approach is fine for now.
     ArrayList<Integer> episodeImages;  //Well, we can use one arrayList too...  Just mixing it up here, Arrays or Templated ArrayLists, you choose.
 
 //    ArrayList<String> episodes;
 //    ArrayList<String> episodeDescriptions;
-    RatingBar ratingbar;
+
+    RatingBar ratingBar;     //Reference to the rating bar GUI component
+    SharedPreferences prefs;
+
     Button btnRandom;
     Context context;   //Creating a reference to our context object, so we only have to get it once.  Context enables access to application specific resources.
     // Eg, spawning & receiving intents, locating the various managers.
@@ -194,6 +194,10 @@ class MyCustomAdapter extends BaseAdapter {
         context = aContext;  //saving the context we'll need it again.
         episodes =aContext.getResources().getStringArray(R.array.episodes);  //retrieving list of episodes predefined in strings-array "episodes" in strings.xml
         episodeDescriptions = aContext.getResources().getStringArray(R.array.episode_descriptions);
+
+        episodeLinks = aContext.getResources().getStringArray(R.array.episode_links);
+
+
 //This is how you would do it if you were using an ArrayList, leaving code here for reference, though we could use it instead of the above.
 //        episodes = (ArrayList<String>) Arrays.asList(aContext.getResources().getStringArray(R.array.episodes));  //retrieving list of episodes predefined in strings-array "episodes" in strings.xml
 //        episodeDescriptions = (ArrayList<String>) Arrays.asList(aContext.getResources().getStringArray(R.array.episode_descriptions));  //Also casting to a friendly ArrayList.
@@ -206,6 +210,8 @@ class MyCustomAdapter extends BaseAdapter {
         episodeImages.add(R.drawable.st_platos_stepchildren__kirk_spock);
         episodeImages.add(R.drawable.st_the_naked_time__sulu_sword);
         episodeImages.add(R.drawable.st_the_trouble_with_tribbles__kirk_tribbles);
+
+        prefs = aContext.getSharedPreferences("Rating Bar Preferences", Context.MODE_PRIVATE);  //get a reference to our shared preferences object.
     }
 
     //STEP 3: Override and implement getCount(..),
@@ -251,6 +257,16 @@ class MyCustomAdapter extends BaseAdapter {
         {
             row = convertView;
         }
+        ratingBar = (RatingBar) row.findViewById(R.id.rbEpisode);  //reference to the rating bar GUI component
+
+        ratingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+            @Override
+            public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+                Toast.makeText(context, "Rating: " + rating, Toast.LENGTH_SHORT).show();
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putFloat("rating " + position, rating);
+            }
+        });
 
 //STEP 5b: Now that we have a valid row instance, we need to get references to the views within that row and fill with the appropriate text and images.
         ImageView imgEpisode = (ImageView) row.findViewById(R.id.imgEpisode);  //Q: Notice we prefixed findViewByID with row, why?  A: Row, is the container.
@@ -263,10 +279,16 @@ class MyCustomAdapter extends BaseAdapter {
 
         btnRandom = (Button) row.findViewById(R.id.btnRandom);
         final String randomMsg = ((Integer)position).toString() +": "+ episodeDescriptions[position];
+        final String webLink = episodeLinks[position];
         btnRandom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Toast.makeText(context, randomMsg, Toast.LENGTH_LONG).show();
+                Log.d("debugging", "onClick: " + webLink);
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(webLink));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
             }
         });
 
