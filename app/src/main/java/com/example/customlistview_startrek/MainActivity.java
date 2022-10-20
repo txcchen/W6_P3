@@ -8,6 +8,7 @@ import android.media.MediaParser;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -23,9 +24,11 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     ListView lvEpisodes;     //Reference to the listview GUI component
     ListAdapter lvAdapter;   //Reference to the Adapter used to populate the listview.
     MediaPlayer liveLongProsper;
+    MediaPlayer khanVideo;
 
 
     @Override
@@ -49,7 +53,8 @@ public class MainActivity extends AppCompatActivity {
         lvAdapter = new MyCustomAdapter(this.getBaseContext());  //instead of passing the boring default string adapter, let's pass our own, see class MyCustomAdapter below!
         lvEpisodes.setAdapter(lvAdapter);
 
-        liveLongProsper = MediaPlayer.create(MainActivity.this, R.raw.live_long_prosper);
+        liveLongProsper = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("live_long_prosper", "raw", getPackageName()));
+        khanVideo = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("wrath_of_khan", "raw", getPackageName()));
 
     }
 
@@ -103,12 +108,13 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-//        if (id == R.id.mnu_five) {
-//            //Kahn!! : play video
-//            Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + "1-800-startrek" ));
-//            startActivity(dialIntent);
-//            return true;
-//        }
+        if (id == R.id.mnu_five) {
+            //Kahn!! : play video
+//            khanVideo.start();
+            Intent videoIntent = new Intent(MainActivity.this, VideoActivity.class);
+            startActivity(videoIntent);
+            return true;
+        }
 
 
 //        if (id == R.id.mnu_zero) {
@@ -127,6 +133,15 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
         return super.onOptionsItemSelected(item);  //if none of the above are true, do the default and return a boolean.
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        liveLongProsper.release();
+        liveLongProsper = null;
+
     }
 }
 
