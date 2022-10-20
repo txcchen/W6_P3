@@ -92,15 +92,8 @@ public class MainActivity extends AppCompatActivity {
         }
         if (id == R.id.mnu_three) {
             //Phasers on stun: spawn SMS with the text "Ouch!"
-//            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:"));
-//            smsIntent.setType("text/plain");
-//            smsIntent.putExtra(Intent.EXTRA_TEXT, "Ouch!!");
-//            startActivity(smsIntent);
 
-            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:"));
-//            smsIntent.addCategory(Intent.CATEGORY_APP_MESSAGING);
-//            smsIntent.setType("vnd.android-dir/mms-sms");
-//            smsIntent.putExtra("address", "");
+            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + "1-800-1020"));
             smsIntent.putExtra("sms_body", "Ouch!!");
             startActivity(smsIntent);
             return true;
