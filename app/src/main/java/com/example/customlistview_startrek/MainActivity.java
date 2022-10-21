@@ -5,8 +5,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 
+import android.media.MediaParser;
+import android.media.MediaPlayer;
+
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -25,13 +30,20 @@ import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -40,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
     private
     ListView lvEpisodes;     //Reference to the listview GUI component
     ListAdapter lvAdapter;   //Reference to the Adapter used to populate the listview.
+    MediaPlayer liveLongProsper;
+    MediaPlayer khanVideo;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +64,9 @@ public class MainActivity extends AppCompatActivity {
         lvEpisodes = (ListView)findViewById(R.id.lvEpisodes);
         lvAdapter = new MyCustomAdapter(this.getBaseContext());  //instead of passing the boring default string adapter, let's pass our own, see class MyCustomAdapter below!
         lvEpisodes.setAdapter(lvAdapter);
+
+        liveLongProsper = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("live_long_prosper", "raw", getPackageName()));
+        khanVideo = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("wrath_of_khan", "raw", getPackageName()));
     }
 
     @Override
@@ -65,18 +83,35 @@ public class MainActivity extends AppCompatActivity {
 
         int id = item.getItemId();
 
-        if (id == R.id.mnu_zero) {
-            Toast.makeText(getBaseContext(), "Menu Zero.", Toast.LENGTH_LONG).show();
-            return true;
-        }
-
         if (id == R.id.mnu_one) {
-            Toast.makeText(getBaseContext(), "Ring ring, Hi Mom.", Toast.LENGTH_LONG).show();
+            //Merchandise: open up the following page in an external browser
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://shop.startrek.com"));
+            startActivity(browserIntent);
             return true;
         }
-
+        if (id == R.id.mnu_two) {
+            //Nuclear Wessel: pre-dial 1-800-startrk
+            Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + "1-800-startrek" ));
+            startActivity(dialIntent);
+            return true;
+        }
         if (id == R.id.mnu_three) {
-            Toast.makeText(getBaseContext(), "Hangup it's a telemarketer.", Toast.LENGTH_LONG).show();
+            //Phasers on stun: spawn SMS with the text "Ouch!"
+
+            Intent smsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + "1-800-1020"));
+            smsIntent.putExtra("sms_body", "Ouch!!");
+            startActivity(smsIntent);
+            return true;
+        }
+        if (id == R.id.mnu_four) {
+            //Live Long and Prosper: play audio of this phrase
+            liveLongProsper.start();
+            return true;
+        }
+        if (id == R.id.mnu_five) {
+            //Kahn!! : play video
+            Intent videoIntent = new Intent(MainActivity.this, VideoActivity.class);
+            startActivity(videoIntent);
             return true;
         }
 
@@ -86,17 +121,24 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
         SharedPreferences prefs = getSharedPreferences("Rating Bar Preferences", Context.MODE_PRIVATE);
+
         for(int i = 0; i < lvEpisodes.getCount(); i++){
             float rating = prefs.getFloat("RatingBar" + i, 3.0f);
             Log.d("debugging::", "Rating" + i + " = " + rating);
             ((MyCustomAdapter)lvAdapter).setRating(i, rating);
         }
+
+        Map<String, ?> x = prefs.getAll();
+        Log.d("debugging::", x.toString());
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+
         SharedPreferences prefs = getSharedPreferences("Rating Bar Preferences", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
@@ -104,11 +146,27 @@ public class MainActivity extends AppCompatActivity {
             editor.putFloat("RatingBar" + i, (Float) lvAdapter.getItem(i));
         }
         editor.commit();
+
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        try{
+            liveLongProsper.release();
+            liveLongProsper = null;
+        }catch (Exception e){
+            Log.d("status", "no video");
+        }
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
         SharedPreferences prefs = getSharedPreferences("Rating Bar Preferences", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
@@ -116,6 +174,14 @@ public class MainActivity extends AppCompatActivity {
             editor.putFloat("RatingBar" + i, (Float) lvAdapter.getItem(i));
         }
         editor.commit();
+
+
+//        SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
+//        SharedPreferences.Editor data = sharedPref.edit();
+//
+//        data.putFloat("rating", MyCustomAdapter.ratingbar.getRating());
+//        data.apply();
+
     }
 }
 
@@ -124,31 +190,7 @@ public class MainActivity extends AppCompatActivity {
 //create a  class that extends BaseAdapter
 //Hit Alt-Ins to easily implement required BaseAdapter methods.
 //***************************************************************//
-//
-//class m2 extends BaseAdapter{
-//    @Override
-//    public int getCount() {
-//        return 0;
-//    }
-//
-//    @Override
-//    public Object getItem(int position) {
-//        return null;
-//    }
-//
-//    @Override
-//    public long getItemId(int position) {
-//        return 0;
-//    }
-//
-//    @Override
-//    public View getView(int position, View convertView, ViewGroup parent) {
-//        return null;
-//    }
-//}
-
 //STEP 1: Create references to needed resources for the ListView Object.  String Arrays, Images, etc.
-
 class MyCustomAdapter extends BaseAdapter {
 
     private
@@ -160,6 +202,7 @@ class MyCustomAdapter extends BaseAdapter {
 
 //    ArrayList<String> episodes;
 //    ArrayList<String> episodeDescriptions;
+
     RatingBar ratingBar;     //Reference to the rating bar GUI component
     Float[] ratingBarValues;  // rating bar values for each episode
 
@@ -175,15 +218,17 @@ class MyCustomAdapter extends BaseAdapter {
         context = aContext;  //saving the context we'll need it again.
         episodes =aContext.getResources().getStringArray(R.array.episodes);  //retrieving list of episodes predefined in strings-array "episodes" in strings.xml
         episodeDescriptions = aContext.getResources().getStringArray(R.array.episode_descriptions);
+
         episodeLinks = aContext.getResources().getStringArray(R.array.episode_links);
+
 
         ratingBarValues = new Float[episodes.length];  //initializing the rating bar values arraylist
         Arrays.fill(ratingBarValues, 3.0f);  //filling the rating bar values arraylist default value of 3.0f
 
+
 //This is how you would do it if you were using an ArrayList, leaving code here for reference, though we could use it instead of the above.
 //        episodes = (ArrayList<String>) Arrays.asList(aContext.getResources().getStringArray(R.array.episodes));  //retrieving list of episodes predefined in strings-array "episodes" in strings.xml
 //        episodeDescriptions = (ArrayList<String>) Arrays.asList(aContext.getResources().getStringArray(R.array.episode_descriptions));  //Also casting to a friendly ArrayList.
-
 
         episodeImages = new ArrayList<Integer>();   //Could also use helper function "getDrawables(..)" below to auto-extract drawable resources, but keeping things as simple as possible.
         episodeImages.add(R.drawable.st_spocks_brain);
