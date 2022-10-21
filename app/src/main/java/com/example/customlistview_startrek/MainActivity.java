@@ -5,15 +5,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 
-
-=======
-import android.media.MediaParser;
 import android.media.MediaPlayer;
-
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,20 +26,13 @@ import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 
 public class MainActivity extends AppCompatActivity {
 
@@ -123,40 +110,48 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
         SharedPreferences prefs = getSharedPreferences("Rating Bar Preferences", Context.MODE_PRIVATE);
-        Map<String, ?> x = prefs.getAll();
-        Log.d("debugging::", x.toString());
-
+        for(int i = 0; i < lvEpisodes.getCount(); i++){
+            float rating = prefs.getFloat("RatingBar" + i, 3.0f);
+            Log.d("debugging::", "Rating" + i + " = " + rating);
+            ((MyCustomAdapter)lvAdapter).setRating(i, rating);
+        }
+        liveLongProsper = MediaPlayer.create(MainActivity.this, getResources().getIdentifier("live_long_prosper", "raw", getPackageName()));
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
+        SharedPreferences prefs = getSharedPreferences("Rating Bar Preferences", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        for (int i = 0; i < lvEpisodes.getCount(); i++) {
+            editor.putFloat("RatingBar" + i, (Float) lvAdapter.getItem(i));
+        }
+        editor.commit();
 
         try{
             liveLongProsper.release();
             liveLongProsper = null;
         }catch (Exception e){
-            Log.d("status", "no video");
+            Log.d("status", "no media player");
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        SharedPreferences prefs = getSharedPreferences("Rating Bar Preferences", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        for (int i = 0; i < lvEpisodes.getCount(); i++) {
+            editor.putFloat("RatingBar" + i, (Float) lvAdapter.getItem(i));
+        }
+        editor.commit();
 
-//        SharedPreferences sharedPref = getSharedPreferences("ratingPref", MODE_PRIVATE);
-//        SharedPreferences.Editor data = sharedPref.edit();
-//
-//        data.putFloat("rating", MyCustomAdapter.ratingbar.getRating());
-//        data.apply();
+        liveLongProsper.stop();
+        liveLongProsper.reset();
+        liveLongProsper.release();
 
     }
 }
@@ -166,7 +161,10 @@ public class MainActivity extends AppCompatActivity {
 //create a  class that extends BaseAdapter
 //Hit Alt-Ins to easily implement required BaseAdapter methods.
 //***************************************************************//
+
+
 //STEP 1: Create references to needed resources for the ListView Object.  String Arrays, Images, etc.
+
 class MyCustomAdapter extends BaseAdapter {
 
     private
@@ -178,9 +176,8 @@ class MyCustomAdapter extends BaseAdapter {
 
 //    ArrayList<String> episodes;
 //    ArrayList<String> episodeDescriptions;
-
     RatingBar ratingBar;     //Reference to the rating bar GUI component
-    SharedPreferences prefs;
+    Float[] ratingBarValues;  // rating bar values for each episode
 
     Button btnRandom;
     Context context;   //Creating a reference to our context object, so we only have to get it once.  Context enables access to application specific resources.
@@ -194,13 +191,15 @@ class MyCustomAdapter extends BaseAdapter {
         context = aContext;  //saving the context we'll need it again.
         episodes =aContext.getResources().getStringArray(R.array.episodes);  //retrieving list of episodes predefined in strings-array "episodes" in strings.xml
         episodeDescriptions = aContext.getResources().getStringArray(R.array.episode_descriptions);
-
         episodeLinks = aContext.getResources().getStringArray(R.array.episode_links);
 
+        ratingBarValues = new Float[episodes.length];  //initializing the rating bar values arraylist
+        Arrays.fill(ratingBarValues, 3.0f);  //filling the rating bar values arraylist default value of 3.0f
 
 //This is how you would do it if you were using an ArrayList, leaving code here for reference, though we could use it instead of the above.
 //        episodes = (ArrayList<String>) Arrays.asList(aContext.getResources().getStringArray(R.array.episodes));  //retrieving list of episodes predefined in strings-array "episodes" in strings.xml
 //        episodeDescriptions = (ArrayList<String>) Arrays.asList(aContext.getResources().getStringArray(R.array.episode_descriptions));  //Also casting to a friendly ArrayList.
+
 
         episodeImages = new ArrayList<Integer>();   //Could also use helper function "getDrawables(..)" below to auto-extract drawable resources, but keeping things as simple as possible.
         episodeImages.add(R.drawable.st_spocks_brain);
@@ -210,9 +209,8 @@ class MyCustomAdapter extends BaseAdapter {
         episodeImages.add(R.drawable.st_platos_stepchildren__kirk_spock);
         episodeImages.add(R.drawable.st_the_naked_time__sulu_sword);
         episodeImages.add(R.drawable.st_the_trouble_with_tribbles__kirk_tribbles);
-
-        prefs = aContext.getSharedPreferences("Rating Bar Preferences", Context.MODE_PRIVATE);  //get a reference to our shared preferences object.
     }
+
 
     //STEP 3: Override and implement getCount(..),
 // ListView uses this to determine how many rows to render.
@@ -227,8 +225,12 @@ class MyCustomAdapter extends BaseAdapter {
     @Override
     public Object getItem(int position) {
 //        return episodes.get(position);  //In Case you want to use an ArrayList
-        return episodes[position];        //really should be returning entire set of row data, but it's up to us, and we aren't using this call.
+        return ratingBarValues[position];        //really should be returning entire set of row data, but it's up to us, and we aren't using this call.
     }
+
+//    public float getRating(int position) {
+//        return ratingBarValues[position];
+//    }
 
     @Override
     public long getItemId(int position) {
@@ -242,6 +244,7 @@ class MyCustomAdapter extends BaseAdapter {
         //position is the index of the row being rendered.
         //convertView represents the Row (it may be null),
         // parent is the layout that has the row Views.
+        Log.d("debugging::", "getView() called for position: " + position);
 
 //STEP 5a: Inflate the listview row based on the xml.
         View row;  //this will refer to the row to be inflated or displayed if it's already been displayed. (listview_row.xml)
@@ -257,16 +260,16 @@ class MyCustomAdapter extends BaseAdapter {
         {
             row = convertView;
         }
-        ratingBar = (RatingBar) row.findViewById(R.id.rbEpisode);  //reference to the rating bar GUI component
 
+        ratingBar = (RatingBar) row.findViewById(R.id.rbEpisode);  //reference to the rating bar GUI component
+        Log.d("debugging::", "ratingBarValues: " + Arrays.toString(ratingBarValues));
         ratingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
             @Override
             public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-                Toast.makeText(context, "Rating: " + rating, Toast.LENGTH_SHORT).show();
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putFloat("rating " + position, rating);
+                ratingBarValues[position] = rating;
             }
         });
+        ratingBar.setRating(ratingBarValues[position]);
 
 //STEP 5b: Now that we have a valid row instance, we need to get references to the views within that row and fill with the appropriate text and images.
         ImageView imgEpisode = (ImageView) row.findViewById(R.id.imgEpisode);  //Q: Notice we prefixed findViewByID with row, why?  A: Row, is the container.
@@ -296,6 +299,11 @@ class MyCustomAdapter extends BaseAdapter {
         return row;  //once the row is fully constructed, return it.  Hey whatif we had buttons, can we target onClick Events within the rows, yep!
 //return convertView;
 
+    }
+
+    public void setRating(int i, float rating) {
+        ratingBarValues[i] = rating;
+        Log.d("debugging::", "setRating: " + ratingBarValues[i]);
     }
 
 

@@ -3,7 +3,6 @@ package com.example.customlistview_startrek;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.View;
 import android.widget.MediaController;
 import android.widget.VideoView;
@@ -28,7 +27,6 @@ public class VideoActivity extends AppCompatActivity {
         MediaController mediaController = new MediaController(this);
         // set media controller object for a video view
         videoView.setMediaController(mediaController);
-
         videoView.start();
     }
 

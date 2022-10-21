@@ -8,12 +8,6 @@
         android:icon ="@drawable/ic_local_florist_black_24dp"
         app:showAsAction="ifRoom">
     </item>
-<!--    <item-->
-<!--        android:id="@+id/mnu_one"-->
-<!--        android:title="Menu1"-->
-<!--        android:icon ="@drawable/ic_card_giftcard_black_24dp"-->
-<!--        app:showAsAction="ifRoom">-->
-<!--    </item>-->
 
     <item
         android:id="@+id/mnu_one"
