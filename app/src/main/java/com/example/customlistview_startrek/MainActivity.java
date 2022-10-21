@@ -250,10 +250,10 @@ class MyCustomAdapter extends BaseAdapter {
         ratingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
             @Override
             public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-                Toast.makeText(context, "Rating: " + rating, Toast.LENGTH_SHORT).show();
                 ratingBarValues[position] = rating;
             }
         });
+        ratingBar.setRating(ratingBarValues[position]);
 
 //STEP 5b: Now that we have a valid row instance, we need to get references to the views within that row and fill with the appropriate text and images.
         ImageView imgEpisode = (ImageView) row.findViewById(R.id.imgEpisode);  //Q: Notice we prefixed findViewByID with row, why?  A: Row, is the container.
